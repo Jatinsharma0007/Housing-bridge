@@ -14,6 +14,8 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
+import ForBuyersPage from "./pages/ForBuyersPage";
+import ForSellersPage from "./pages/ForSellersPage";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +34,8 @@ const App = () => (
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/for-buyers" element={<ForBuyersPage />} />
+          <Route path="/for-sellers" element={<ForSellersPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </TooltipProvider>
