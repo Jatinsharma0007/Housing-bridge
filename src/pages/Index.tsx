@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PlatformLogos from '@/components/PlatformLogos';
+import ChatBot from '@/components/ChatBot';
 
 const Index = () => {
   return (
@@ -101,6 +102,7 @@ const Index = () => {
       </main>
 
       <Footer />
+      <ChatBot />
     </div>
   );
 };
