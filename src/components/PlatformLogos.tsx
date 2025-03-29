@@ -1,12 +1,12 @@
 
 const PlatformLogos = () => {
   const platforms = [
-    { name: 'MagicBricks', logo: '/lovable-uploads/ef5ef61f-2d88-42d2-92c1-59c6dfb9070f.png' },
-    { name: '99acres', logo: '/lovable-uploads/9d674b63-eb68-4082-9d65-bf824bc039b1.png' },
-    { name: 'Housing', logo: '/lovable-uploads/2cf5f289-0de3-44de-9b01-a7a4f51b9b5d.png' },
-    { name: 'Makaan', logo: '/lovable-uploads/3df2b7f8-bc54-40c5-ab79-97ef7adeed4d.png' },
-    { name: 'NoBroker', logo: '/lovable-uploads/cf9f6227-0d8d-4570-9acc-e1499c92a3b0.png' },
-    { name: 'OLX', logo: '/lovable-uploads/a9d1c74b-6292-41a0-b977-c3d0c64484d2.png' }
+    { name: 'MagicBricks', logo: 'https://play-lh.googleusercontent.com/O_gRuQ8fzI3-VGMA7wiXXWX8BfCiJ8Xd9xX5107LL-LrA_9jEO6_TNsdIBm6NfAY6Q8=w240-h480-rw' },
+    { name: '99acres', logo: 'https://is1-3.housingcdn.com/4f2250e8/e96cb0e2270547d61a7920651054eb83/v0/logo_housing_com-3.png' },
+    { name: 'Housing', logo: 'https://play-lh.googleusercontent.com/yCgUMdHJqkjn_Z5dPd3GvECSP8mT8nCY-B7KbhDEHY8wGrJis66a1NdmFnGPcr29LbCi=w240-h480-rw' },
+    { name: 'Makaan', logo: 'https://play-lh.googleusercontent.com/rrwGcdFQsTpm4iUfZwULpzVQdukUD3hBk_DdXlYK4tpgddQCzdYxP8bBpXRBotG0OYE=w240-h480-rw' },
+    { name: 'NoBroker', logo: 'https://play-lh.googleusercontent.com/DJs9itDSC0vz7-eauXxuMvTZ0xAtjYT0QrBRrKBjX0BotXTAqnOQ6BjKNOHIIGkl1w=w240-h480-rw' },
+    { name: 'OLX', logo: 'https://play-lh.googleusercontent.com/H_E_ZI9U-HYh1c6Y_4_E-Mnr_5DRzs0Y3JO2UmZVDoqjOPRvBGUe-0t9HVQnTMCxig=w240-h480-rw' }
   ];
 
   return (

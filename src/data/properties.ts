@@ -1,4 +1,3 @@
-
 // Mock data for properties
 export interface Property {
   id: number;
@@ -25,9 +24,12 @@ export interface Property {
 }
 
 const placeholderImages = [
-  '/lovable-uploads/3fdfa63e-0352-4590-aaa2-ea0c2775084a.png',
-  '/lovable-uploads/3df2b7f8-bc54-40c5-ab79-97ef7adeed4d.png',
-  '/lovable-uploads/2cf5f289-0de3-44de-9b01-a7a4f51b9b5d.png',
+  'https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=1170&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1626178793926-22b28830aa30?q=80&w=1170&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=1170&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1570129477492-45c003edd2be?q=80&w=1170&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1170&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=1175&auto=format&fit=crop'
 ];
 
 export const properties: Property[] = [
@@ -291,11 +293,8 @@ export const properties: Property[] = [
     latitude: 12.9166,
     longitude: 77.6101
   },
-  // Add more properties to meet the 70 sample data requirement
-  // These are just 10 examples, you would continue with similar data for the remaining properties
 ];
 
-// Generate 70 properties by duplicating and slightly modifying the existing ones
 export const generateProperties = (): Property[] => {
   const allProperties: Property[] = [...properties];
   
@@ -310,15 +309,14 @@ export const generateProperties = (): Property[] => {
     'Kothrud', 'Hinjewadi', 'Viman Nagar', 'Koregaon Park', 'Baner'
   ];
   
-  // Generate more properties to reach 70 total
   while (allProperties.length < 70) {
     const originalIndex = allProperties.length % properties.length;
     const original = properties[originalIndex];
     
     const cityIndex = allProperties.length % cities.length;
     
-    const priceVariation = Math.floor(Math.random() * 5000) - 2000; // -2000 to +3000
-    const sqftVariation = Math.floor(Math.random() * 200) - 100; // -100 to +100
+    const priceVariation = Math.floor(Math.random() * 5000) - 2000;
+    const sqftVariation = Math.floor(Math.random() * 200) - 100;
     
     const newProperty: Property = {
       ...original,
@@ -352,10 +350,8 @@ export const generateProperties = (): Property[] => {
   return allProperties;
 };
 
-// Export the generated properties
 export const allProperties = generateProperties();
 
-// Function to get best price source for a property
 export const getBestPriceSource = (property: Property): {source: string, price: number} => {
   let bestSource = '';
   let lowestPrice = Number.MAX_SAFE_INTEGER;
@@ -370,7 +366,6 @@ export const getBestPriceSource = (property: Property): {source: string, price: 
   return {source: bestSource, price: lowestPrice};
 };
 
-// Function to filter properties
 export interface FilterOptions {
   location?: string;
   city?: string;
@@ -385,38 +380,29 @@ export interface FilterOptions {
 
 export const filterProperties = (options: FilterOptions): Property[] => {
   return allProperties.filter(property => {
-    // Filter by location/city
     if (options.location && 
        !(property.location.toLowerCase().includes(options.location.toLowerCase()) || 
          property.city.toLowerCase().includes(options.location.toLowerCase()))) {
       return false;
     }
     
-    // Filter by specific city
     if (options.city && property.city.toLowerCase() !== options.city.toLowerCase()) {
       return false;
     }
     
-    // Filter by price range
     const bestPrice = getBestPriceSource(property).price;
     if (options.priceMin && bestPrice < options.priceMin) return false;
     if (options.priceMax && bestPrice > options.priceMax) return false;
     
-    // Filter by beds
     if (options.beds && property.beds < options.beds) return false;
     
-    // Filter by baths
     if (options.baths && property.baths < options.baths) return false;
     
-    // Filter by furnished
     if (options.furnished === true && !property.furnished) return false;
     
-    // Filter by property type
     if (options.propertyType && property.propertyType !== options.propertyType) return false;
     
-    // Filter by data sources
     if (options.dataSources && options.dataSources.length > 0) {
-      // Check if the property is listed in any of the selected sources
       let isInSelectedSource = false;
       for (const source of options.dataSources) {
         if (property.price[source]) {
