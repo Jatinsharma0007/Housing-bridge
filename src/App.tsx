@@ -17,7 +17,6 @@ import Index from "./pages/Index";
 import ForBuyersPage from "./pages/ForBuyersPage";
 import ForSellersPage from "./pages/ForSellersPage";
 
-// Create a new QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
