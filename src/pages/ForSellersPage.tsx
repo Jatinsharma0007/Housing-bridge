@@ -1,8 +1,11 @@
 
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/toast';
 import {
   Card,
   CardContent,
@@ -13,12 +16,21 @@ import {
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from 'react';
 import { Building, MessageSquare, Users, TrendingUp, UserPlus, Check } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import ChatBot from '@/components/ChatBot';
+import PaymentGateway from '@/components/PaymentGateway';
+import PropertyListingSuccess from '@/components/PropertyListingSuccess';
+
+// Form submission states
+enum FormSubmissionState {
+  FORM,
+  PAYMENT,
+  SUCCESS
+}
 
 const ForSellersPage = () => {
+  const { toast } = useToast();
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -27,6 +39,10 @@ const ForSellersPage = () => {
     address: '',
     description: '',
   });
+  
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [submissionState, setSubmissionState] = useState<FormSubmissionState>(FormSubmissionState.FORM);
+  const [paymentAmount, setPaymentAmount] = useState(0);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -35,15 +51,45 @@ const ForSellersPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Thank you for submitting your property! Our team will contact you shortly.');
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      propertyType: '',
-      address: '',
-      description: '',
-    });
+    
+    if (!selectedPlan) {
+      toast({
+        title: "Select a plan",
+        description: "Please select a listing plan to continue.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Determine payment amount based on selected plan
+    switch(selectedPlan) {
+      case 'Basic':
+        setPaymentAmount(0);
+        setSubmissionState(FormSubmissionState.SUCCESS);
+        break;
+      case 'Standard':
+        setPaymentAmount(1999);
+        setSubmissionState(FormSubmissionState.PAYMENT);
+        break;
+      case 'Premium':
+        setPaymentAmount(4999);
+        setSubmissionState(FormSubmissionState.PAYMENT);
+        break;
+      default:
+        setPaymentAmount(0);
+    }
+  };
+
+  const handleSelectPlan = (planName: string) => {
+    setSelectedPlan(planName);
+  };
+  
+  const handlePaymentSuccess = () => {
+    setSubmissionState(FormSubmissionState.SUCCESS);
+  };
+  
+  const handlePaymentCancel = () => {
+    setSubmissionState(FormSubmissionState.FORM);
   };
 
   const features = [
@@ -107,6 +153,162 @@ const ForSellersPage = () => {
       recommended: false
     }
   ];
+  
+  // Render the appropriate form state
+  const renderFormState = () => {
+    switch (submissionState) {
+      case FormSubmissionState.PAYMENT:
+        return (
+          <PaymentGateway 
+            amount={paymentAmount} 
+            description={`Property Listing - ${selectedPlan} Plan`}
+            onSuccess={handlePaymentSuccess}
+            onCancel={handlePaymentCancel}
+          />
+        );
+      
+      case FormSubmissionState.SUCCESS:
+        return (
+          <PropertyListingSuccess 
+            propertyName={formData.address || undefined}
+          />
+        );
+        
+      case FormSubmissionState.FORM:
+      default:
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Property Listing Form</CardTitle>
+              <CardDescription>Fill out the details below to list your property on our platform</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit}>
+                <div className="grid gap-6">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium" htmlFor="name">
+                        Full Name
+                      </label>
+                      <Input 
+                        id="name" 
+                        name="name" 
+                        value={formData.name} 
+                        onChange={handleInputChange}
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium" htmlFor="email">
+                        Email
+                      </label>
+                      <Input 
+                        id="email" 
+                        name="email" 
+                        type="email" 
+                        value={formData.email} 
+                        onChange={handleInputChange}
+                        required 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium" htmlFor="phone">
+                        Phone Number
+                      </label>
+                      <Input 
+                        id="phone" 
+                        name="phone" 
+                        value={formData.phone} 
+                        onChange={handleInputChange}
+                        required 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium" htmlFor="propertyType">
+                        Property Type
+                      </label>
+                      <select 
+                        id="propertyType" 
+                        name="propertyType" 
+                        value={formData.propertyType}
+                        onChange={handleInputChange}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        required
+                      >
+                        <option value="">Select Property Type</option>
+                        <option value="apartment">Apartment</option>
+                        <option value="house">House</option>
+                        <option value="villa">Villa</option>
+                        <option value="pg">PG/Hostel</option>
+                        <option value="commercial">Commercial Space</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" htmlFor="address">
+                      Property Address
+                    </label>
+                    <Input 
+                      id="address" 
+                      name="address" 
+                      value={formData.address} 
+                      onChange={handleInputChange}
+                      required 
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium" htmlFor="description">
+                      Property Description
+                    </label>
+                    <Textarea 
+                      id="description" 
+                      name="description" 
+                      rows={4}
+                      value={formData.description} 
+                      onChange={handleInputChange}
+                      required 
+                    />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">
+                      Select Your Listing Plan
+                    </label>
+                    <div className="grid gap-4 md:grid-cols-3">
+                      {plans.map((plan) => (
+                        <div 
+                          key={plan.name}
+                          onClick={() => handleSelectPlan(plan.name)}
+                          className={`cursor-pointer p-4 border rounded-md ${
+                            selectedPlan === plan.name 
+                              ? 'border-2 border-housing-orange bg-orange-50' 
+                              : 'border-gray-200'
+                          }`}
+                        >
+                          <div className="text-center">
+                            <h4 className="font-semibold">{plan.name}</h4>
+                            <p className="font-bold text-lg">{plan.price}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                <Button type="submit" className="mt-6 w-full bg-housing-navy">
+                  Submit Property
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        );
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -124,18 +326,22 @@ const ForSellersPage = () => {
               List once and get exposure across multiple property platforms, reaching more potential tenants
             </p>
             <div className="mx-auto flex max-w-md flex-col justify-center space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
-              <Button size="lg" className="bg-housing-orange hover:bg-orange-600">
-                List Your Property
-              </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-housing-navy">
-                Learn More
-              </Button>
+              <a href="#list-property">
+                <Button size="lg" className="bg-housing-orange hover:bg-orange-600">
+                  List Your Property
+                </Button>
+              </a>
+              <a href="#benefits">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-housing-navy">
+                  Learn More
+                </Button>
+              </a>
             </div>
           </div>
         </div>
         
         {/* Benefits Section */}
-        <div className="py-16">
+        <div className="py-16" id="benefits">
           <div className="container mx-auto px-4">
             <h2 className="mb-4 text-center text-3xl font-bold text-housing-navy">Why List with Us?</h2>
             <p className="mx-auto mb-12 max-w-2xl text-center text-gray-600">
@@ -189,11 +395,13 @@ const ForSellersPage = () => {
                       ))}
                     </ul>
                     
-                    <Button 
-                      className={`w-full ${plan.recommended ? 'bg-housing-orange hover:bg-orange-600' : 'bg-housing-navy hover:bg-blue-800'}`}
-                    >
-                      Get Started
-                    </Button>
+                    <a href="#list-property">
+                      <Button 
+                        className={`w-full ${plan.recommended ? 'bg-housing-orange hover:bg-orange-600' : 'bg-housing-navy hover:bg-blue-800'}`}
+                      >
+                        Get Started
+                      </Button>
+                    </a>
                   </div>
                 </div>
               ))}
@@ -202,7 +410,7 @@ const ForSellersPage = () => {
         </div>
         
         {/* Listing Form & Resources */}
-        <div className="py-16">
+        <div className="py-16" id="list-property">
           <div className="container mx-auto px-4">
             <Tabs defaultValue="list-property" className="mx-auto max-w-4xl">
               <TabsList className="mx-auto mb-8 grid w-full max-w-md grid-cols-2">
@@ -211,111 +419,7 @@ const ForSellersPage = () => {
               </TabsList>
               
               <TabsContent value="list-property">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Property Listing Form</CardTitle>
-                    <CardDescription>Fill out the details below to list your property on our platform</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleSubmit}>
-                      <div className="grid gap-6">
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium" htmlFor="name">
-                              Full Name
-                            </label>
-                            <Input 
-                              id="name" 
-                              name="name" 
-                              value={formData.name} 
-                              onChange={handleInputChange}
-                              required 
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium" htmlFor="email">
-                              Email
-                            </label>
-                            <Input 
-                              id="email" 
-                              name="email" 
-                              type="email" 
-                              value={formData.email} 
-                              onChange={handleInputChange}
-                              required 
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium" htmlFor="phone">
-                              Phone Number
-                            </label>
-                            <Input 
-                              id="phone" 
-                              name="phone" 
-                              value={formData.phone} 
-                              onChange={handleInputChange}
-                              required 
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium" htmlFor="propertyType">
-                              Property Type
-                            </label>
-                            <select 
-                              id="propertyType" 
-                              name="propertyType" 
-                              value={formData.propertyType}
-                              onChange={handleInputChange}
-                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                              required
-                            >
-                              <option value="">Select Property Type</option>
-                              <option value="apartment">Apartment</option>
-                              <option value="house">House</option>
-                              <option value="villa">Villa</option>
-                              <option value="pg">PG/Hostel</option>
-                              <option value="commercial">Commercial Space</option>
-                            </select>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium" htmlFor="address">
-                            Property Address
-                          </label>
-                          <Input 
-                            id="address" 
-                            name="address" 
-                            value={formData.address} 
-                            onChange={handleInputChange}
-                            required 
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium" htmlFor="description">
-                            Property Description
-                          </label>
-                          <Textarea 
-                            id="description" 
-                            name="description" 
-                            rows={4}
-                            value={formData.description} 
-                            onChange={handleInputChange}
-                            required 
-                          />
-                        </div>
-                      </div>
-                      
-                      <Button type="submit" className="mt-6 w-full bg-housing-navy">
-                        Submit Property
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
+                {renderFormState()}
               </TabsContent>
               
               <TabsContent value="resources">
