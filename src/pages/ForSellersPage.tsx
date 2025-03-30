@@ -127,7 +127,7 @@ const ForSellersPage = () => {
               <Button size="lg" className="bg-housing-orange hover:bg-orange-600">
                 List Your Property
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-housing-navy">
+              <Button size="lg" variant="outline" className="border-white text-black hover:bg-white hover:text-housing-navy">
                 Learn More
               </Button>
             </div>
