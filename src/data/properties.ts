@@ -21,10 +21,6 @@ export interface Property {
   condition: 'Excellent' | 'Good' | 'Average' | 'Needs Maintenance';
   latitude: number;
   longitude: number;
-  priceHistory?: {
-    date: string;
-    price: number;
-  }[];
 }
 
 const placeholderImages = [
@@ -299,10 +295,8 @@ export const properties: Property[] = [
   },
 ];
 
-import { additionalProperties } from './additionalProperties';
-
 export const generateProperties = (): Property[] => {
-  const allProperties: Property[] = [...properties, ...additionalProperties];
+  const allProperties: Property[] = [...properties];
   
   const cities = ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Chennai', 'Pune'];
   const states = ['Karnataka', 'Maharashtra', 'Delhi', 'Telangana', 'Tamil Nadu', 'Maharashtra'];
@@ -315,7 +309,7 @@ export const generateProperties = (): Property[] => {
     'Kothrud', 'Hinjewadi', 'Viman Nagar', 'Koregaon Park', 'Baner'
   ];
   
-  while (allProperties.length < 100) {
+  while (allProperties.length < 70) {
     const originalIndex = allProperties.length % properties.length;
     const original = properties[originalIndex];
     
@@ -350,25 +344,6 @@ export const generateProperties = (): Property[] => {
       longitude: original.longitude + (Math.random() * 0.1 - 0.05)
     };
     
-    const today = new Date();
-    const priceHistory = [];
-    const basePrice = Math.max(5000, original.price['Housing'] + priceVariation);
-    
-    for (let i = 0; i < 12; i++) {
-      const pastDate = new Date(today);
-      pastDate.setMonth(today.getMonth() - (11 - i));
-      
-      const historicalVariation = Math.floor(Math.random() * 2000) - 1000;
-      const historicalPrice = basePrice + historicalVariation;
-      
-      priceHistory.push({
-        date: pastDate.toISOString().split('T')[0],
-        price: Math.max(4000, historicalPrice)
-      });
-    }
-    
-    newProperty.priceHistory = priceHistory;
-    
     allProperties.push(newProperty);
   }
   
@@ -401,8 +376,6 @@ export interface FilterOptions {
   furnished?: boolean;
   propertyType?: string;
   dataSources?: string[];
-  priceHistoryAvailable?: boolean;
-  keyword?: string;
 }
 
 export const filterProperties = (options: FilterOptions): Property[] => {
@@ -440,56 +413,6 @@ export const filterProperties = (options: FilterOptions): Property[] => {
       if (!isInSelectedSource) return false;
     }
     
-    if (options.priceHistoryAvailable && !property.priceHistory) {
-      return false;
-    }
-    
-    if (options.keyword && !(
-      property.title.toLowerCase().includes(options.keyword.toLowerCase()) ||
-      property.description.toLowerCase().includes(options.keyword.toLowerCase()) ||
-      property.location.toLowerCase().includes(options.keyword.toLowerCase()) ||
-      property.city.toLowerCase().includes(options.keyword.toLowerCase()) ||
-      property.amenities.some(amenity => amenity.toLowerCase().includes(options.keyword.toLowerCase()))
-    )) {
-      return false;
-    }
-    
     return true;
   });
-};
-
-export const getPriceTrend = (property: Property): {trend: 'up' | 'down' | 'stable', percentage: number} => {
-  if (!property.priceHistory || property.priceHistory.length < 2) {
-    return { trend: 'stable', percentage: 0 };
-  }
-  
-  const firstPrice = property.priceHistory[0].price;
-  const lastPrice = property.priceHistory[property.priceHistory.length - 1].price;
-  const difference = lastPrice - firstPrice;
-  const percentage = Math.round((difference / firstPrice) * 100 * 10) / 10;
-  
-  let trend: 'up' | 'down' | 'stable' = 'stable';
-  if (percentage > 1) {
-    trend = 'up';
-  } else if (percentage < -1) {
-    trend = 'down';
-  }
-  
-  return { trend, percentage: Math.abs(percentage) };
-};
-
-export const getLowestHistoricalPrice = (property: Property): {price: number, date: string} | null => {
-  if (!property.priceHistory || property.priceHistory.length === 0) {
-    return null;
-  }
-  
-  let lowestPrice = property.priceHistory[0];
-  
-  property.priceHistory.forEach(entry => {
-    if (entry.price < lowestPrice.price) {
-      lowestPrice = entry;
-    }
-  });
-  
-  return { price: lowestPrice.price, date: lowestPrice.date };
 };

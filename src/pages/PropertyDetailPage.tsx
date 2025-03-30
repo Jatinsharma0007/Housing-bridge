@@ -1,307 +1,328 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { 
-  MapPin, Bed, Bath, CheckSquare, Home, Calendar, Tag, 
-  ChevronRight, ChevronLeft, MessageCircle 
-} from 'lucide-react';
+
+import { useState, useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { ChevronRight, Check, MapPin, Bed, Bath, Home, Calendar, Building2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ChatBot from '@/components/ChatBot';
-import { Property, allProperties, getBestPriceSource } from '@/data/properties';
-import PriceTrendAnalysis from '@/components/PriceTrendAnalysis';
-import { toast } from '@/hooks/use-toast';
-import BookingModal from '@/components/BookingModal';
+import PropertyCard from '@/components/PropertyCard';
+import { allProperties, Property } from '@/data/properties';
 
 const PropertyDetailPage = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const [property, setProperty] = useState<Property | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [similarProperties, setSimilarProperties] = useState<Property[]>([]);
+  const [selectedImage, setSelectedImage] = useState<string>('');
 
   useEffect(() => {
-    // Simulate API fetch
-    setTimeout(() => {
-      const foundProperty = allProperties.find(p => p.id === Number(id));
-      setProperty(foundProperty || null);
-      setLoading(false);
-    }, 500);
+    if (id) {
+      const foundProperty = allProperties.find(p => p.id === parseInt(id));
+      if (foundProperty) {
+        setProperty(foundProperty);
+        setSelectedImage(foundProperty.images[0]);
+
+        // Find similar properties (same location or similar price)
+        const similar = allProperties
+          .filter(p => 
+            p.id !== foundProperty.id && 
+            (p.location === foundProperty.location || 
+             Math.abs(Object.values(p.price)[0] - Object.values(foundProperty.price)[0]) < 5000)
+          )
+          .slice(0, 3);
+        setSimilarProperties(similar);
+      }
+    }
   }, [id]);
-
-  const nextImage = () => {
-    if (!property) return;
-    setCurrentImageIndex((prev) => (prev + 1) % property.images.length);
-  };
-
-  const prevImage = () => {
-    if (!property) return;
-    setCurrentImageIndex((prev) => (prev === 0 ? property.images.length - 1 : prev - 1));
-  };
-
-  const handleBookingRequest = () => {
-    setIsBookingModalOpen(true);
-  };
-
-  const handleContactLandlord = () => {
-    toast({
-      title: "Message Sent",
-      description: "Your message has been sent to the landlord.",
-      duration: 3000,
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="container mx-auto px-4 py-12">
-          <div className="flex animate-pulse flex-col gap-6 md:flex-row">
-            <div className="h-96 w-full rounded-lg bg-gray-200 md:w-2/3"></div>
-            <div className="flex w-full flex-col gap-4 md:w-1/3">
-              <div className="h-10 w-3/4 rounded bg-gray-200"></div>
-              <div className="h-6 w-1/2 rounded bg-gray-200"></div>
-              <div className="h-20 w-full rounded bg-gray-200"></div>
-              <div className="h-10 w-1/3 rounded bg-gray-200"></div>
-              <div className="h-40 w-full rounded bg-gray-200"></div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   if (!property) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="container mx-auto px-4 py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold text-gray-800">Property Not Found</h1>
-          <p className="mb-6 text-gray-600">The property you're looking for doesn't exist or has been removed.</p>
-          <Link to="/properties">
-            <Button>Back to Properties</Button>
-          </Link>
+        <div className="container mx-auto flex min-h-[500px] items-center justify-center px-4">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-800">Property not found</h2>
+            <p className="mb-6 text-gray-600">The property you're looking for doesn't exist or has been removed.</p>
+            <Link to="/properties">
+              <Button className="bg-housing-navy text-white hover:bg-blue-800">
+                Browse Other Properties
+              </Button>
+            </Link>
+          </div>
         </div>
         <Footer />
       </div>
     );
   }
 
-  const bestPrice = getBestPriceSource(property);
+  // Format price with commas
+  const formatPrice = (price: number) => {
+    return `₹${price.toLocaleString()}`;
+  };
+
+  // Get the best price source and value
+  const getBestPrice = () => {
+    let lowestSource = '';
+    let lowestPrice = Number.MAX_SAFE_INTEGER;
+
+    Object.entries(property.price).forEach(([source, price]) => {
+      if (price < lowestPrice) {
+        lowestPrice = price;
+        lowestSource = source;
+      }
+    });
+
+    return { source: lowestSource, price: lowestPrice };
+  };
+
+  const bestPrice = getBestPrice();
+
+  // Get price difference percentage for different sources
+  const getPriceDifference = (price: number) => {
+    const diff = ((price - bestPrice.price) / bestPrice.price) * 100;
+    return diff.toFixed(1);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <Link to="/" className="hover:text-housing-navy">Home</Link>
             <ChevronRight className="h-4 w-4" />
             <Link to="/properties" className="hover:text-housing-navy">Properties</Link>
             <ChevronRight className="h-4 w-4" />
-            <span>{property.location}</span>
+            <span>{property.title}</span>
           </div>
         </div>
 
-        {/* Property details */}
-        <div className="flex flex-col gap-8 lg:flex-row">
-          {/* Left column: Images and details */}
-          <div className="w-full lg:w-2/3">
-            {/* Image gallery */}
-            <div className="relative mb-6 overflow-hidden rounded-lg">
-              <div className="aspect-w-16 aspect-h-9 relative h-96">
-                <img 
-                  src={property.images[currentImageIndex]} 
-                  alt={property.title}
-                  className="h-full w-full object-cover"
-                />
-                
-                {property.images.length > 1 && (
-                  <>
-                    <button 
-                      onClick={prevImage}
-                      className="absolute left-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
-                    >
-                      <ChevronLeft className="h-6 w-6" />
-                    </button>
-                    <button 
-                      onClick={nextImage}
-                      className="absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
-                    >
-                      <ChevronRight className="h-6 w-6" />
-                    </button>
-                    <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-                      {property.images.map((_, idx) => (
-                        <span 
-                          key={idx} 
-                          className={`block h-2 w-2 rounded-full ${currentImageIndex === idx ? 'bg-white' : 'bg-white/50'}`}
-                        ></span>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-            
-            {/* Property title and location */}
-            <h1 className="mb-2 text-3xl font-bold text-gray-800">{property.title}</h1>
-            <div className="mb-6 flex items-center text-gray-600">
-              <MapPin className="mr-1 h-5 w-5" />
+        {/* Property Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">{property.title}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-gray-600">
+            <div className="flex items-center">
+              <MapPin className="mr-1 h-4 w-4" />
               <span>{property.location}, {property.city}, {property.state}</span>
             </div>
-            
-            {/* Property highlights */}
-            <div className="mb-8 grid grid-cols-3 gap-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-col items-center">
-                <Bed className="mb-2 h-6 w-6 text-housing-navy" />
-                <span className="text-lg font-semibold">{property.beds} Beds</span>
+            <Badge className="bg-housing-navy">{property.propertyType}</Badge>
+            {property.furnished && (
+              <Badge className="bg-green-600">Furnished</Badge>
+            )}
+            <Badge className="bg-gray-500">Condition: {property.condition}</Badge>
+          </div>
+        </div>
+
+        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Image Gallery */}
+          <div className="lg:col-span-2">
+            <div className="overflow-hidden rounded-lg bg-white shadow-md">
+              <div className="relative h-[400px]">
+                <img 
+                  src={selectedImage} 
+                  alt={property.title}
+                  className="h-full w-full object-cover" 
+                />
               </div>
-              <div className="flex flex-col items-center">
-                <Bath className="mb-2 h-6 w-6 text-housing-navy" />
-                <span className="text-lg font-semibold">{property.baths} Baths</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <Home className="mb-2 h-6 w-6 text-housing-navy" />
-                <span className="text-lg font-semibold">{property.sqft} sqft</span>
-              </div>
-            </div>
-            
-            {/* Property description */}
-            <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-semibold text-gray-800">About This Property</h2>
-              <p className="text-gray-600">{property.description}</p>
-            </div>
-            
-            {/* Amenities */}
-            <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-semibold text-gray-800">Amenities</h2>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                {property.amenities.map((amenity, index) => (
-                  <div key={index} className="flex items-center">
-                    <CheckSquare className="mr-2 h-5 w-5 text-housing-navy" />
-                    <span className="text-gray-700">{amenity}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* Price Trend Analysis */}
-            <div className="mb-8">
-              <PriceTrendAnalysis property={property} />
-            </div>
-            
-            {/* Platform comparison */}
-            <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-semibold text-gray-800">Available On</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-                {Object.entries(property.price).map(([platform, price], index) => (
+              <div className="flex overflow-x-auto p-2">
+                {property.images.map((image, index) => (
                   <div 
-                    key={index} 
-                    className={`flex items-center justify-between rounded-lg border ${platform === bestPrice.source ? 'border-green-200 bg-green-50' : 'border-gray-200'} p-4`}
+                    key={index}
+                    className={`mr-2 h-20 w-20 flex-shrink-0 cursor-pointer rounded-md border-2 ${
+                      selectedImage === image ? 'border-housing-navy' : 'border-transparent'
+                    }`}
+                    onClick={() => setSelectedImage(image)}
                   >
-                    <div className="flex items-center">
-                      <img 
-                        src={`/platform-logos/${platform.toLowerCase()}.png`} 
-                        alt={platform} 
-                        className="mr-3 h-6 w-auto"
-                      />
-                      <span className="font-medium">{platform}</span>
-                    </div>
-                    <div className={`text-lg font-semibold ${platform === bestPrice.source ? 'text-green-600' : 'text-gray-700'}`}>
-                      ₹{price.toLocaleString()}
-                      {platform === bestPrice.source && <span className="ml-2 text-xs">Best</span>}
-                    </div>
+                    <img 
+                      src={image}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="h-full w-full rounded-md object-cover"
+                    />
                   </div>
                 ))}
               </div>
             </div>
           </div>
-          
-          {/* Right column: Booking and contact */}
-          <div className="w-full lg:w-1/3">
-            <div className="sticky top-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="mb-6">
-                <h2 className="mb-1 text-2xl font-bold text-housing-navy">
-                  ₹{bestPrice.price.toLocaleString()}<span className="text-base font-normal text-gray-600">/month</span>
-                </h2>
-                <div className="flex items-center text-sm text-gray-600">
-                  <Tag className="mr-1 h-4 w-4" />
-                  <span>Best price from {bestPrice.source}</span>
+
+          {/* Price Comparison */}
+          <div className="rounded-lg bg-white p-6 shadow-md">
+            <h2 className="mb-4 text-xl font-semibold text-gray-800">Price Comparison</h2>
+            
+            <div className="mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-600">Best Price</span>
+                <div className="flex items-center">
+                  <span className="text-2xl font-bold text-housing-navy">{formatPrice(bestPrice.price)}</span>
+                  <span className="ml-1 text-gray-600">/month</span>
                 </div>
               </div>
-              
-              <div className="mb-6">
-                <div className="mb-2 flex items-center">
-                  <Calendar className="mr-2 h-5 w-5 text-housing-navy" />
-                  <span className="font-medium">Available From</span>
+              <div className="mt-1 flex items-center justify-between text-sm">
+                <div className="flex items-center text-green-600">
+                  <Check className="mr-1 h-4 w-4" />
+                  <span>Lowest on {bestPrice.source}</span>
                 </div>
-                <p className="text-gray-700">
-                  {new Date(property.availableFrom).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-              </div>
-              
-              <div className="mb-6">
-                <div className="mb-2 flex items-center">
-                  <Home className="mr-2 h-5 w-5 text-housing-navy" />
-                  <span className="font-medium">Property Type</span>
-                </div>
-                <p className="text-gray-700">{property.propertyType}</p>
-              </div>
-              
-              <div className="mb-6">
-                <div className="mb-2 flex items-center">
-                  <CheckSquare className="mr-2 h-5 w-5 text-housing-navy" />
-                  <span className="font-medium">Condition</span>
-                </div>
-                <p className="text-gray-700">{property.condition}</p>
-              </div>
-              
-              <div className="mb-6">
-                <div className="mb-2 flex items-center">
-                  <Home className="mr-2 h-5 w-5 text-housing-navy" />
-                  <span className="font-medium">Furnished</span>
-                </div>
-                <p className="text-gray-700">{property.furnished ? 'Yes' : 'No'}</p>
-              </div>
-              
-              <div className="space-y-3">
-                <Button 
-                  onClick={handleBookingRequest}
-                  className="w-full bg-housing-orange text-white hover:bg-orange-600"
+                <Link 
+                  to="#" 
+                  className="flex items-center text-housing-navy hover:underline"
                 >
-                  Request Booking
-                </Button>
-                
-                <Button 
-                  onClick={handleContactLandlord}
-                  variant="outline"
-                  className="w-full border-housing-navy text-housing-navy hover:bg-housing-navy hover:text-white"
-                >
-                  <MessageCircle className="mr-2 h-5 w-5" />
-                  Contact Landlord
-                </Button>
+                  <span>Visit Source</span>
+                  <ExternalLink className="ml-1 h-3 w-3" />
+                </Link>
               </div>
+            </div>
+
+            <div className="mb-6 space-y-2">
+              {Object.entries(property.price)
+                .filter(([source]) => source !== bestPrice.source)
+                .map(([source, price]) => (
+                  <div key={source} className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
+                    <div>
+                      <span className="text-sm font-medium">{source}</span>
+                      <div className="text-xs text-red-500">
+                        +{getPriceDifference(price)}% higher
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">{formatPrice(price)}</div>
+                      <Link 
+                        to="#" 
+                        className="text-xs text-housing-navy hover:underline"
+                      >
+                        Visit
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            <div className="space-y-4">
+              <Button className="w-full bg-housing-orange text-white hover:bg-orange-600">
+                Apply Now
+              </Button>
+              <Button variant="outline" className="w-full border-housing-navy text-housing-navy hover:bg-gray-50">
+                Schedule Viewing
+              </Button>
             </div>
           </div>
         </div>
+
+        {/* Property Details Tabs */}
+        <div className="mb-8">
+          <Tabs defaultValue="details">
+            <TabsList className="mb-4">
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="description">Description</TabsTrigger>
+              <TabsTrigger value="amenities">Amenities</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="details" className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-xl font-semibold text-gray-800">Property Details</h2>
+              <div className="grid grid-cols-1 gap-y-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="flex items-center">
+                  <Bed className="mr-3 h-5 w-5 text-housing-navy" />
+                  <div>
+                    <p className="text-sm text-gray-600">Bedrooms</p>
+                    <p className="font-medium">{property.beds}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <Bath className="mr-3 h-5 w-5 text-housing-navy" />
+                  <div>
+                    <p className="text-sm text-gray-600">Bathrooms</p>
+                    <p className="font-medium">{property.baths}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center">
+                  <Home className="mr-3 h-5 w-5 text-housing-navy" />
+                  <div>
+                    <p className="text-sm text-gray-600">Area</p>
+                    <p className="font-medium">{property.sqft} sqft</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <Building2 className="mr-3 h-5 w-5 text-housing-navy" />
+                  <div>
+                    <p className="text-sm text-gray-600">Property Type</p>
+                    <p className="font-medium">{property.propertyType}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <Calendar className="mr-3 h-5 w-5 text-housing-navy" />
+                  <div>
+                    <p className="text-sm text-gray-600">Available From</p>
+                    <p className="font-medium">
+                      {new Date(property.availableFrom).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <Check className="mr-3 h-5 w-5 text-housing-navy" />
+                  <div>
+                    <p className="text-sm text-gray-600">Furnished</p>
+                    <p className="font-medium">{property.furnished ? 'Yes' : 'No'}</p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="description" className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-xl font-semibold text-gray-800">Description</h2>
+              <p className="text-gray-600">{property.description}</p>
+            </TabsContent>
+            
+            <TabsContent value="amenities" className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-xl font-semibold text-gray-800">Amenities</h2>
+              <ul className="grid grid-cols-2 gap-x-4 gap-y-2 md:grid-cols-3">
+                {property.amenities.map((amenity, index) => (
+                  <li key={index} className="flex items-center">
+                    <Check className="mr-2 h-4 w-4 text-green-600" />
+                    <span>{amenity}</span>
+                  </li>
+                ))}
+              </ul>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Similar Properties */}
+        <div className="mb-8">
+          <h2 className="mb-6 text-2xl font-bold text-gray-800">Similar Properties</h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {similarProperties.map(prop => {
+              const bestPrice = getBestPrice();
+              return (
+                <PropertyCard
+                  key={prop.id}
+                  id={prop.id}
+                  title={prop.title}
+                  location={`${prop.location}, ${prop.city}`}
+                  price={Object.values(prop.price)[0]}
+                  source={Object.keys(prop.price)[0]}
+                  beds={prop.beds}
+                  baths={prop.baths}
+                  sqft={prop.sqft}
+                  image={prop.images[0]}
+                />
+              );
+            })}
+          </div>
+        </div>
       </div>
-      
-      {/* Booking Modal */}
-      {property && (
-        <BookingModal
-          open={isBookingModalOpen}
-          onClose={() => setIsBookingModalOpen(false)}
-          property={property}
-        />
-      )}
-      
+
       <Footer />
       <ChatBot />
     </div>

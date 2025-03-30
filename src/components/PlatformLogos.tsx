@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ExternalLink } from 'lucide-react';
@@ -12,37 +12,37 @@ const fetchPlatformData = async () => {
   return [
     { 
       name: 'MagicBricks', 
-      logo: '/platform-logos/magicbricks.png',
+      logo: 'https://play-lh.googleusercontent.com/O_gRuQ8fzI3-VGMA7wiXXWX8BfCiJ8Xd9xX5107LL-LrA_9jEO6_TNsdIBm6NfAY6Q8=w240-h480-rw',
       url: 'https://www.magicbricks.com/',
       propertyCount: 120450
     },
     { 
       name: '99acres', 
-      logo: '/platform-logos/99acres.png',
+      logo: 'https://is1-3.housingcdn.com/4f2250e8/e96cb0e2270547d61a7920651054eb83/v0/logo_housing_com-3.png',
       url: 'https://www.99acres.com/',
       propertyCount: 98760
     },
     { 
       name: 'Housing', 
-      logo: '/platform-logos/housing.png',
+      logo: 'https://play-lh.googleusercontent.com/yCgUMdHJqkjn_Z5dPd3GvECSP8mT8nCY-B7KbhDEHY8wGrJis66a1NdmFnGPcr29LbCi=w240-h480-rw',
       url: 'https://housing.com/',
       propertyCount: 87500
     },
     { 
       name: 'Makaan', 
-      logo: '/platform-logos/makaan.png',
+      logo: 'https://play-lh.googleusercontent.com/rrwGcdFQsTpm4iUfZwULpzVQdukUD3hBk_DdXlYK4tpgddQCzdYxP8bBpXRBotG0OYE=w240-h480-rw',
       url: 'https://www.makaan.com/',
       propertyCount: 75600
     },
     { 
       name: 'NoBroker', 
-      logo: '/platform-logos/nobroker.png',
+      logo: 'https://play-lh.googleusercontent.com/DJs9itDSC0vz7-eauXxuMvTZ0xAtjYT0QrBRrKBjX0BotXTAqnOQ6BjKNOHIIGkl1w=w240-h480-rw',
       url: 'https://www.nobroker.in/',
       propertyCount: 63200
     },
     { 
       name: 'OLX', 
-      logo: '/platform-logos/olx.png',
+      logo: 'https://play-lh.googleusercontent.com/H_E_ZI9U-HYh1c6Y_4_E-Mnr_5DRzs0Y3JO2UmZVDoqjOPRvBGUe-0t9HVQnTMCxig=w240-h480-rw',
       url: 'https://www.olx.in/real-estate',
       propertyCount: 50800
     }
