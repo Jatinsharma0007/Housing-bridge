@@ -1,8 +1,11 @@
 
-import { useState } from 'react';
-import { Search } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useNavigate } from 'react-router-dom';
+import { allProperties } from '@/data/properties';
+import { Command, CommandList, CommandInput, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 
 interface SearchBarProps {
   onSearch?: (query: string) => void;
@@ -11,10 +14,78 @@ interface SearchBarProps {
 
 const SearchBar = ({ onSearch, className }: SearchBarProps) => {
   const [query, setQuery] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const navigate = useNavigate();
+  const commandRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (commandRef.current && !commandRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (query.length >= 2) {
+      // Generate suggestions based on properties data
+      const locationSuggestions = new Set<string>();
+      const citySuggestions = new Set<string>();
+      const amenitySuggestions = new Set<string>();
+      
+      allProperties.forEach(property => {
+        if (property.location.toLowerCase().includes(query.toLowerCase())) {
+          locationSuggestions.add(property.location);
+        }
+        if (property.city.toLowerCase().includes(query.toLowerCase())) {
+          citySuggestions.add(property.city);
+        }
+        property.amenities.forEach(amenity => {
+          if (amenity.toLowerCase().includes(query.toLowerCase())) {
+            amenitySuggestions.add(amenity);
+          }
+        });
+      });
+      
+      const allSuggestions = [
+        ...Array.from(locationSuggestions), 
+        ...Array.from(citySuggestions),
+        ...Array.from(amenitySuggestions)
+      ].slice(0, 6); // Limit to 6 suggestions
+      
+      setSuggestions(allSuggestions);
+      setIsOpen(allSuggestions.length > 0);
+    } else {
+      setSuggestions([]);
+      setIsOpen(false);
+    }
+  }, [query]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSearch) onSearch(query);
+    setIsOpen(false);
+    if (onSearch) {
+      onSearch(query);
+    } else {
+      // If no onSearch callback provided, navigate to properties page with search query
+      navigate(`/properties?search=${encodeURIComponent(query)}`);
+    }
+  };
+
+  const handleSelectSuggestion = (value: string) => {
+    setQuery(value);
+    setIsOpen(false);
+    if (onSearch) {
+      onSearch(value);
+    } else {
+      navigate(`/properties?search=${encodeURIComponent(value)}`);
+    }
   };
 
   return (
@@ -29,7 +100,32 @@ const SearchBar = ({ onSearch, className }: SearchBarProps) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="h-12 rounded-l-lg border-r-0 pl-10 pr-4"
+          autoComplete="off"
         />
+        
+        {/* Suggestions dropdown */}
+        {isOpen && suggestions.length > 0 && (
+          <div 
+            ref={commandRef}
+            className="absolute left-0 right-0 top-full z-10 mt-1 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg"
+          >
+            <Command>
+              <CommandList>
+                <CommandGroup>
+                  {suggestions.map((suggestion, index) => (
+                    <CommandItem 
+                      key={index} 
+                      onSelect={() => handleSelectSuggestion(suggestion)}
+                      className="cursor-pointer px-4 py-2 hover:bg-gray-100"
+                    >
+                      {suggestion}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </div>
+        )}
       </div>
       <Button
         type="submit"
@@ -39,26 +135,6 @@ const SearchBar = ({ onSearch, className }: SearchBarProps) => {
         Search
       </Button>
     </form>
-  );
-};
-
-const MapPin = (props: any) => {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-      <circle cx="12" cy="10" r="3"/>
-    </svg>
   );
 };
 
